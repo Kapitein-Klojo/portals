@@ -125,6 +125,169 @@ public:
     }
 };
 
+class Portal{
+public:
+    sf::Vector2f pos;
+    int direction; // 0 = left, 1 = right, 2 = up, 3 = down
+
+    float height;
+    float width;
+
+    sf::RectangleShape shape;
+
+    void draw(sf::RenderWindow& window)
+    {
+        window.draw(shape);
+    }
+
+    void update()
+    {
+        shape.setPosition(pos);
+    }
+
+    void shoot_portal(Player& player, int shootdirection, std::vector<Static_Body>& Walls)
+    {   
+                    
+        float Closestdistance = 100000.f;
+        int closest_wall;
+
+        sf::Vector2f player_center = {player.pos.x + (player.shape.getSize().x / 2.f), player.pos.y + (player.shape.getSize().y / 2.f)};
+
+        float offset = width/4.f;
+
+
+        switch (shootdirection)
+        {
+            case 0: // = left
+                shape.setSize({width, height});
+                for (int i = 0; i < Walls.size(); i++)
+                {
+                    if (Walls[i].pos.x < player_center.x)
+                    {
+                        float Walltop = Walls[i].pos.y;
+                        float Wallbottom = Walls[i].pos.y + Walls[i].shape.getSize().y;
+
+                        if (player_center.y < Wallbottom && player_center.y > Walltop)
+                        {
+                            float distance = player_center.x - Walls[i].pos.x;
+
+
+                            if (distance < Closestdistance)
+                            {
+                                Closestdistance = distance;
+                                closest_wall = i;
+
+                                
+                            }
+
+                        }
+                    }
+                }
+
+                pos = {Walls[closest_wall].pos.x + Walls[closest_wall].shape.getSize().x - player.shape.getSize().x + offset ,player.pos.y - 25.f};
+                update();
+                break;
+
+            case 1: // = right
+                shape.setSize({width, height});
+                for (int i = 0; i < Walls.size(); i++)
+                {
+                    if (Walls[i].pos.x > player_center.x)
+                    {
+                        float Walltop = Walls[i].pos.y;
+                        float Wallbottom = Walls[i].pos.y + Walls[i].shape.getSize().y;
+
+                        if (player_center.y < Wallbottom && player_center.y > Walltop)
+                        {
+                            float distance = Walls[i].pos.x - player_center.x;
+
+
+                            if (distance < Closestdistance)
+                            {
+                                Closestdistance = distance;
+                                closest_wall = i;
+
+                                
+                            }
+
+                        }
+                    }
+                }
+
+                pos = {Walls[closest_wall].pos.x - offset ,player.pos.y - 25.f};
+                update();
+                break;
+            
+            case 2: // = up
+                shape.setSize({height, width});
+                for (int i = 0; i < Walls.size(); i++)
+                {
+                    if (Walls[i].pos.y < player_center.y)
+                    {
+                        float Wallleft = Walls[i].pos.x;
+                        float Wallright = Walls[i].pos.x + Walls[i].shape.getSize().x;
+
+                        if (player_center.x > Wallleft && player_center.x < Wallright)
+                        {
+                            float distance = Walls[i].pos.y - player_center.y;
+
+
+                            if (distance < Closestdistance)
+                            {
+                                Closestdistance = distance;
+                                closest_wall = i;
+
+                                
+                            }
+
+                        }
+                    }
+                }
+
+                pos = {player.pos.x - 12.5f, Walls[closest_wall].pos.y + Walls[closest_wall].shape.getSize().y - player.shape.getSize().y + offset};
+                update();
+                break;
+
+                case 3: // = down
+                shape.setSize({height, width});
+                for (int i = 0; i < Walls.size(); i++)
+                {
+                    if (Walls[i].pos.y > player_center.y)
+                    {
+                        float Wallleft = Walls[i].pos.x;
+                        float Wallright = Walls[i].pos.x + Walls[i].shape.getSize().x;
+
+                        if (player_center.x > Wallleft && player_center.x < Wallright)
+                        {
+                            float distance = Walls[i].pos.y - player_center.y;
+
+
+                            if (distance < Closestdistance)
+                            {
+                                Closestdistance = distance;
+                                closest_wall = i;
+
+                                
+                            }
+
+                        }
+                    }
+                }
+
+                pos = {player.pos.x - 12.5f, Walls[closest_wall].pos.y - offset};
+                update();
+                break;
+
+
+        }
+
+            
+        
+    }
+
+
+
+};
 
 int main()
 {
@@ -140,12 +303,14 @@ int main()
     window.setKeyRepeatEnabled(false);
 
     Player player;
-    player.MAXSPEED = 650;
+    player.MAXSPEED = 600;
     player.DASHSPEED = 10000;
-    player.pos = {400.f, 100.f};
+    player.pos = {100.f, 800.f};
     player.mass = 10;
-    player.shape.setSize({50, 45});
+    player.shape.setSize({50, 50});
     player.shape.setFillColor(sf::Color::Black);
+
+    
 
     Static_Body ground;
     ground.pos = {0.f, 980.f};
@@ -153,23 +318,71 @@ int main()
     ground.shape.setSize({1920.f, 100.f});
     ground.shape.setFillColor(sf::Color(51, 51, 51));
 
+    Static_Body leftwall;
+    leftwall.pos = {0.f, 50.f};
+    leftwall.shape.setPosition(leftwall.pos);
+    leftwall.shape.setSize({50.f, 930.f});
+    leftwall.shape.setFillColor(sf::Color(51, 51, 51));
+
+    Static_Body rightwall;
+    rightwall.pos = {1870.f, 50.f};
+    rightwall.shape.setPosition(rightwall.pos);
+    rightwall.shape.setSize({50.f, 930.f});
+    rightwall.shape.setFillColor(sf::Color(51, 51, 51));
+
+    Static_Body ceiling;
+    ceiling.pos = {0.f, 0.f};
+    ceiling.shape.setPosition(ceiling.pos);
+    ceiling.shape.setSize({1920.f, 50.f});
+    ceiling.shape.setFillColor(sf::Color(51, 51, 51));
+
     Static_Body wall;
-    wall.pos = {1000.f, 880};
+    wall.pos = {300.f, 880};
     wall.shape.setPosition(wall.pos);
     wall.shape.setSize({200.f, 100.f});
     wall.shape.setFillColor(sf::Color(51, 51, 51));
 
+    std::vector<Static_Body> Walls;
+    Walls.push_back(ground);
+    Walls.push_back(leftwall);
+    Walls.push_back(rightwall);
+    Walls.push_back(ceiling);
+    Walls.push_back(wall);
+
+    Portal portal1;
+    portal1.shape.setFillColor(sf::Color::Cyan);
+    portal1.height = 75.f;
+    portal1.width = 50.f;
+    portal1.shape.setSize({portal1.width, portal1.height});
+
+    Portal portal2;
+    portal2.shape.setFillColor(sf::Color::Cyan);
+    portal2.height = 75.f;
+    portal2.width = 50.f;
+    portal2.shape.setSize({portal2.width, portal2.height});
+
+    unsigned int which_portal = 1;
+
+
+
+
+
 
     int direction = 1;    // direction 1 = right (D), -1 = left (A)
 
-    bool W_pressed = false;
-    bool A_pressed = false;
-    bool S_pressed = false;
-    bool D_pressed = false;
-    bool space_pressed = false;
-    bool shift_pressed = false;
+    bool W_pressed      = false;
+    bool A_pressed      = false;
+    bool S_pressed      = false;
+    bool D_pressed      = false;
+    bool space_pressed  = false;
+    bool shift_pressed  = false;
 
-    bool is_on_ground = false;
+    bool up_pressed     = false;
+    bool down_pressed   = false;
+    bool left_pressed   = false;
+    bool right_pressed  = false;
+
+    bool is_on_ground   = false;
 
 
 
@@ -225,6 +438,22 @@ int main()
                 {
                     shift_pressed = true;
                 }
+                if (key->scancode == sf::Keyboard::Scancode::Up)
+                {
+                    up_pressed = true;
+                }
+                if (key->scancode == sf::Keyboard::Scancode::Down)
+                {
+                    down_pressed = true;
+                }
+                if (key->scancode == sf::Keyboard::Scancode::Left)
+                {
+                    left_pressed = true;
+                }
+                if (key->scancode == sf::Keyboard::Scancode::Right)
+                {
+                    right_pressed = true;
+                }
             }
                             // when keyboard is released
             else if (auto* key = event->getIf<sf::Event::KeyReleased>())
@@ -254,6 +483,23 @@ int main()
                 {
                     shift_pressed = false;
                 }
+                if (key->scancode == sf::Keyboard::Scancode::Up)
+                {
+                    up_pressed = false;
+                }
+                if (key->scancode == sf::Keyboard::Scancode::Down)
+                {
+                    down_pressed = false;
+                }
+                if (key->scancode == sf::Keyboard::Scancode::Left)
+                {
+                    left_pressed = false;
+                }
+                if (key->scancode == sf::Keyboard::Scancode::Right)
+                {
+                    right_pressed = false;
+                }
+
             }
         
         }
@@ -263,7 +509,7 @@ int main()
 
         sf::Vector2f gravity = {0.f, 9800};
 
-        if (player.isOnGround(ground) || player.isOnGround(wall))
+        if (player.isOnGround(ground) || player.isOnGround(wall) || player.isOnGround(leftwall)|| player.isOnGround(rightwall)|| player.isOnGround(ceiling))
             is_on_ground = true;
         else
             is_on_ground = false;
@@ -273,8 +519,6 @@ int main()
 
         // player movement
 
-
-        
         if (A_pressed && player.vel.x > -player.MAXSPEED)
         {
             player.apply_force({-5000.f, 0.f});
@@ -285,7 +529,6 @@ int main()
         }
         if (!A_pressed && !D_pressed && is_on_ground && player.vel.x != 0)
         {
-            std::cout << player.vel.x << '\n';
             if (player.vel.x < 5.f)
             {
                 player.apply_force({2500.f, 0.f});
@@ -313,13 +556,96 @@ int main()
             player.vel.y = 0.f;
         }
 
+
+        // portal shooting
+        int shootDirection;  // 0 = left, 1 = right, 2 = up, 3 = down
+      
+        if (left_pressed)
+        {
+            shootDirection = 0;
+
+            if (which_portal == 1)
+            {
+                portal1.shoot_portal(player, shootDirection, Walls);
+                which_portal = 2;
+                left_pressed = false;
+            }
+            else if (which_portal == 2)
+            {
+                portal2.shoot_portal(player, shootDirection, Walls);
+                which_portal = 1;
+                left_pressed = false;
+            }
+        }
+        if (right_pressed)
+        {
+            shootDirection = 1;
+
+            if (which_portal == 1)
+            {
+                portal1.shoot_portal(player, shootDirection, Walls);
+                which_portal = 2;
+                right_pressed = false;
+            }
+            else if (which_portal == 2)
+            {
+                portal2.shoot_portal(player, shootDirection, Walls);
+                which_portal = 1;
+                right_pressed = false;
+            }
+        }
+        if (up_pressed)
+        {
+            shootDirection = 2;
+
+            if (which_portal == 1)
+            {
+                portal1.shoot_portal(player, shootDirection, Walls);
+                which_portal = 2;
+                up_pressed = false;
+            }
+            else if (which_portal == 2)
+            {
+                portal2.shoot_portal(player, shootDirection, Walls);
+                which_portal = 1;
+                up_pressed = false;
+            }
+        }
+        if (down_pressed)
+        {
+            shootDirection = 3;
+
+            if (which_portal == 1)
+            {
+                portal1.shoot_portal(player, shootDirection, Walls);
+                which_portal = 2;
+                down_pressed = false;
+            }
+            else if (which_portal == 2)
+            {
+                portal2.shoot_portal(player, shootDirection, Walls);
+                which_portal = 1;
+                down_pressed = false;
+            }
+        }
+        
+        
+        
         
         // update
         player.update(dt);
 
        
+
         player.collision(ground);
+        player.collision(ceiling);
+        player.collision(leftwall);
+        player.collision(rightwall);
         player.collision(wall);
+
+        
+
+
         
 
     
@@ -333,6 +659,11 @@ int main()
         // drwa
         ground.draw(window);
         wall.draw(window);
+        leftwall.draw(window);
+        rightwall.draw(window);
+        ceiling.draw(window);
+        portal1.draw(window);
+        portal2.draw(window);
         player.draw(window);
         
 
